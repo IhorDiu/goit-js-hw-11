@@ -32,7 +32,7 @@ function onSearch(e) {
   e.preventDefault();
 
   pixabayApiService.query = e.currentTarget.searchQuery.value.trim();
-  
+  refs.makeupGallery.innerHTML = '';
   pixabayApiService.resetPage();
   pixabayApiService
     .axiosArticles()
