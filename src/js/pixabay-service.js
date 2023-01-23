@@ -11,8 +11,7 @@ export default class PixabayApiService {
      }
 
      async  axiosArticles () {
-  console.log(this.searchQuery);
-
+ 
         const options = {
             params: {
               key: '33035024-2fcf940a53cdfcd459b8f09ea',

@@ -9,7 +9,7 @@ const refs = {
   searchForm: document.querySelector('#search-form'),
   makeupGallery: document.querySelector('.gallery'),
   loadMoreBtn: document.querySelector('.load-more'),
-  guard: document.querySelector('.guard'),
+  cache: document.querySelector('.cache'),
 };
 
 const optionsScroll = {
@@ -19,11 +19,31 @@ const optionsScroll = {
 };
 
 const pixabayApiService = new PixabayApiService();
-const observer = new IntersectionObserver(onLoadMoreBtn, optionsScroll);
+const observer = new IntersectionObserver(loadMoreOnScroll, optionsScroll);
 
 refs.searchForm.addEventListener('submit', onSearch);
 
 Notiflix.Notify.init({
+  className: 'notiflix-report',
+  width: '320px',
+  backgroundColor: '#f8f8f8',
+  borderRadius: '25px',
+  rtl: false,
+  zindex: 4002,
+  backOverlay: true,
+  backOverlayColor: 'rgba(0,0,0,0.5)',
+  backOverlayClickToClose: false,
+  fontFamily: 'Quicksand',
+  svgSize: '110px',
+  plainText: true,
+  titleFontSize: '16px',
+  titleMaxLength: 34,
+  messageFontSize: '13px',
+  messageMaxLength: 400,
+  buttonFontSize: '14px',
+  buttonMaxLength: 34,
+  cssAnimation: true,
+  cssAnimationDuration: 260,
   position: 'center-center',
   cssAnimationStyle: 'from-bottom',
 });
@@ -36,15 +56,22 @@ function onSearch(e) {
   pixabayApiService.resetPage();
   pixabayApiService
     .axiosArticles()
-    .then(resp => {
-      if (resp.data.hits.length === 0) {
+    .then(response => {
+      console.log(response);
+      if (pixabayApiService.query === '') {
         Notiflix.Notify.failure(
-          'Sorry, there are no images matching your search query. Please try again.'
+          'Empty query. Please input something for search'
         );
         return;
+      } 
+      
+      if (response.data.hits.length === 0) {
+        return Notiflix.Notify.failure(
+          'Sorry, there are no images matching your search query. Please try again.'
+        );
       }
-
-      pixabayApiService.pictureArr = resp.data.hits;
+      
+      pixabayApiService.pictureArr = response.data.hits;
       let sliderGallery = new SimpleLightbox('.gallery a', {
         captionsData: 'alt',
         captionDelay: 250,
@@ -54,7 +81,7 @@ function onSearch(e) {
         CreateGallery(pixabayApiService.pictureArr)
       );
       sliderGallery.refresh();
-      observer.observe(refs.guard);
+      observer.observe(refs.cache);
     })
     .catch(err => {
       console.log(err);
@@ -62,25 +89,21 @@ function onSearch(e) {
     });
 }
 
-function onLoadMoreBtn(entries, observer) {
+function loadMoreOnScroll(entries, observer) {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       pixabayApiService.updatePage();
-
       pixabayApiService
         .axiosArticles()
-        .then(resp => {
+        .then(response => {
           const maxAmountPages = Math.round(
-            resp.data.totalHits / resp.data.hits.length
+            response.data.totalHits / response.data.hits.length
           );
-
-          pixabayApiService.pictureArr = resp.data.hits;
+          pixabayApiService.pictureArr = response.data.hits;
           if (pixabayApiService.page === maxAmountPages) {
             Notiflix.Notify.info('You have reached the end of search results.');
-
             return;
           }
-
           refs.makeupGallery.insertAdjacentHTML(
             'beforeend',
             CreateGallery(pixabayApiService.pictureArr)
